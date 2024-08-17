@@ -1,0 +1,64 @@
+-- Создаем ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui") -- Добавляем в PlayerGui
+
+-- Создаем Frame для GUI
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 50)
+frame.Position = UDim2.new(1, -320, 0, 20) -- Правый верхний угол
+frame.BackgroundColor3 = Color3.new(0, 0, 0)
+frame.Parent = screenGui
+
+-- Создаем TextBox для ввода ника игрока
+local playerNameInput = Instance.new("UserName")
+playerNameInput.Size = UDim2.new(1, -10, 0, 40)
+playerNameInput.Position = UDim2.new(0, 5, 0, 5)
+playerNameInput.PlaceholderText = "Enter UserName"
+playerNameInput.TextColor3 = Color3.new(1, 1, 1)
+playerNameInput.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+playerNameInput.Parent = frame
+
+-- Функция для начала следования
+local function startFollowing(targetPlayer)
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+
+	-- Проверяем, что персонаж в R6
+	if character:FindFirstChild("Humanoid").RigType ~= Enum.HumanoidRigType.R6 then
+		playerNameInput.Text = "Ur not R6!"
+		return
+	end
+
+	-- Загрузка и проигрывание R6 анимации
+	local humanoid = character:WaitForChild("Humanoid")
+	local animation = Instance.new("Animation")
+	animation.AnimationId = "rbxassetid://78968693166701" -- Обновленный ID анимации
+	local animTrack = humanoid:LoadAnimation(animation)
+	animTrack:Play()
+
+	-- Следование за другим игроком на близком расстоянии
+	game:GetService("RunService").Stepped:Connect(function()
+		if targetPlayer and targetPlayer.Character and character then
+			-- Держим игрока на расстоянии 1 единицы позади целевого игрока
+			local targetPosition = targetPlayer.Character.PrimaryPart.Position - targetPlayer.Character.PrimaryPart.CFrame.LookVector * 1.5
+			character:MoveTo(targetPosition)
+		end
+	end)
+end
+
+-- Обработчик нажатия Enter в TextBox
+playerNameInput.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		local targetPlayer = game.Players:FindFirstChild(playerNameInput.Text)
+		if targetPlayer then
+			startFollowing(targetPlayer)
+		else
+			playerNameInput.Text = "Player Not found"
+			wait(2)
+			playerNameInput.Text = ""
+		end
+	end
+end)
+
+-- Проверка вывода в консоль
+print("GUI успешно создан")
